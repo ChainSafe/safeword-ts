@@ -1,0 +1,30 @@
+{
+  "name": "safeword-ts",
+  "version": "1.0.0",
+  "description": "A library designed to prevent overflows and underflows with types and runtime errors",
+  "main": "index.ts",
+  "scripts": {
+    "test": "run test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JonathanLorimer/safeword-ts.git"
+  },
+  "author": "Jonathan Lorimer",
+  "license": "GPL-3.0-or-later",
+  "bugs": {
+    "url": "https://github.com/JonathanLorimer/safeword-ts/issues"
+  },
+  "homepage": "https://github.com/JonathanLorimer/safeword-ts#readme",
+  "dependencies": {
+    "@types/bn.js": "^4.11.5",
+    "@types/node": "^11.13.8",
+    "bn.js": "^4.11.8",
+    "ts-node": "^8.1.0",
+    "tslint": "^5.16.0",
+    "typescript": "^3.4.5"
+  },
+  "devDependencies": {
+    "jest": "^24.7.1"
+  }
+}
