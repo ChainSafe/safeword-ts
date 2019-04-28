@@ -1,8 +1,20 @@
 import { BN } from 'bn.js'
-import { floatingPointCheck, constructBN, bitLengthCheck } from '../lib/helpers'
+import {
+	floatingPointCheck,
+	constructBN,
+	bitLengthCheck,
+	negativeCheck
+} from '../lib/helpers'
 import { just, wordsError } from '../lib/types'
-import { FloatingPointNotSupportedError, InvalidSizeError } from '../lib/error'
+import {
+	FloatingPointNotSupportedError,
+	InvalidSizeError,
+	NegativeUnsignedError
+} from '../lib/error'
 
+/**
+ * @section Validator Functions
+ */
 describe('floatingPointCheck()', () => {
 	//  Success Cases
 	it('Should allow construction of non-decimal string', () => {
@@ -83,5 +95,20 @@ describe('bitLengthCheck()', () => {
 				wordsError(new InvalidSizeError(words, new BN(number).bitLength()))
 			)
 		})
+	})
+})
+describe('negativeCheck()', () => {
+	//  Success Cases
+	it('should pass BN through with no error if it is positive', () => {
+		expect(negativeCheck(new BN(1))).toEqual(just(new BN(1)))
+	})
+	it('should pass BN through with no error if it is 0', () => {
+		expect(negativeCheck(new BN(0))).toEqual(just(new BN(0)))
+	})
+	// Failure Cases
+	it('should error when passed a negative number', () => {
+		expect(negativeCheck(new BN(-1))).toEqual(
+			wordsError(new NegativeUnsignedError())
+		)
 	})
 })
