@@ -1,7 +1,7 @@
 import { BN } from 'bn.js'
-import { floatingPointCheck } from '../lib/helpers'
+import { floatingPointCheck, constructBN, bitLengthCheck } from '../lib/helpers'
 import { just, wordsError } from '../lib/types'
-import { FloatingPointNotSupportedError } from '../lib/error'
+import { FloatingPointNotSupportedError, InvalidSizeError } from '../lib/error'
 
 describe('floatingPointCheck()', () => {
 	//  Success Cases
@@ -35,5 +35,53 @@ describe('floatingPointCheck()', () => {
 		const nonDecimalBN = new BN(2.88)
 		const nonDecimalBN2 = new BN(2.88)
 		expect(floatingPointCheck(nonDecimalBN)).toEqual(just(nonDecimalBN2))
+	})
+})
+describe('constructBN()', () => {
+	//  Success Cases
+	it('should allow construction of BN from string', () => {
+		const seventyTwo = '72'
+		expect(constructBN(seventyTwo)).toEqual(new BN(seventyTwo))
+	})
+	it('should allow construction of BN from number', () => {
+		const eightHundered = 800
+		expect(constructBN(800)).toEqual(new BN(eightHundered))
+	})
+	it('should pass an existing BN through', () => {
+		const bn = new BN(766)
+		expect(constructBN(bn)).toEqual(bn)
+	})
+	// Failure Cases
+	it('should pass null values through', () => {
+		expect(constructBN(null)).toEqual(null)
+	})
+})
+describe('bitLengthCheck()', () => {
+	const arrayToFiftyThree = Array.from(new Array(52), (_, i) => i + 1)
+	const bitLengthNumbers = arrayToFiftyThree.map((e) => new BN(2 ** e - 1))
+	const bitLengthNumbersPlusOne = arrayToFiftyThree.map((e) => new BN(2 ** e))
+	//  Success Cases
+	it('should pass BN through with no error if it is below the allotted word number', () => {
+		const bitLengthChecks = bitLengthNumbers.map((e, i) =>
+			bitLengthCheck(i + 1)(e)
+		)
+		bitLengthChecks.forEach((safeNumber, i) => {
+			const number = 2 ** (i + 1) - 1
+			expect(safeNumber).toEqual(just(new BN(number)))
+		})
+	})
+	// Failure Cases
+	it('should error when bit length of number is greater than the words passed to it', () => {
+		const bitLengthChecks = bitLengthNumbersPlusOne.map((e, i) =>
+			bitLengthCheck(i + 1)(e)
+		)
+
+		bitLengthChecks.forEach((safeNumber, i) => {
+			const words = i + 1
+			const number = 2 ** words
+			expect(safeNumber).toEqual(
+				wordsError(new InvalidSizeError(words, new BN(number).bitLength()))
+			)
+		})
 	})
 })

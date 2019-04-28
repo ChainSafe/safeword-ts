@@ -57,24 +57,24 @@ export const floatingPointCheck = (
 
 const safeNumberFloatingPointCheck = bindSafeNumber(floatingPointCheck)
 
-export const constructBN = (value: Constructable): SafeNumber<any, BN> => {
+export const constructBN = (value: Constructable): BN => {
 	if (typeof value === 'number' || typeof value === 'string') {
-		return just(new BN(value, 10))
+		return new BN(value, 10)
 	}
-	return just(value)
+	return value
 }
 
-const safeNumberConstructBN = bindSafeNumber(constructBN)
+const safeNumberConstructBN = fmapSafeNumber(constructBN)
 
-export const byteLengthCheck = (words: number) => (
+export const bitLengthCheck = (words: number) => (
 	num: BN
 ): SafeNumber<InvalidSizeError, BN> =>
 	num.bitLength() > words
 		? wordsError(new InvalidSizeError(words, num.bitLength()))
 		: just(num)
 
-const safeNumberByteLengthCheck = (words: number) =>
-	bindSafeNumber(byteLengthCheck(words))
+const safeNumberBitLengthCheck = (words: number) =>
+	bindSafeNumber(bitLengthCheck(words))
 
 export const negativeCheck = (num: BN): SafeNumber<NegativeUnsignedError, BN> =>
 	num.isNeg() ? wordsError(new NegativeUnsignedError()) : just(num)
@@ -106,7 +106,7 @@ export const safeUintConstructor = <Words extends Integer>(
 	// prettier-ignore
 	safeNumberConstructInteger<Words>(words)(false)( 
 		safeNumberNegativeCheck(
-			safeNumberByteLengthCheck(words)(
+			safeNumberBitLengthCheck(words)(
 				safeNumberConstructBN(
 					safeNumberFloatingPointCheck(
 						just(value)
