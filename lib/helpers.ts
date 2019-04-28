@@ -2,7 +2,8 @@ import { BN } from 'bn.js'
 import {
 	Constructable,
 	SafeNumber,
-	liftSafeNumber,
+	bindSafeNumber,
+	fmapSafeNumber,
 	Integer,
 	WordsEnum,
 	Uint8,
@@ -19,7 +20,12 @@ import {
 	Int128,
 	Int256,
 	Int,
-	MetaInteger
+	MetaInteger,
+	Just,
+	just,
+	ErrorEnum,
+	WordsError,
+	wordsError
 } from './types'
 import {
 	TypeNotSupportedError,
@@ -30,12 +36,7 @@ import {
 	InconsistentSizeError,
 	FloatingPointNotSupportedError,
 	DivisionByZeroError,
-	WordsError,
-	wordsError,
-	UnconstructableInteger,
-	Just,
-	just,
-	ErrorEnum
+	UnconstructableInteger
 } from './error'
 
 Function.prototype['c'] = function<Input, Output>(f: (x: Input) => Output) {
@@ -58,7 +59,7 @@ export const floatingPointCheck = (
 	return just(num)
 }
 
-const lFloatingPointCheck = liftSafeNumber(floatingPointCheck)
+const lFloatingPointCheck = bindSafeNumber(floatingPointCheck)
 
 export const constructBN = (value: Constructable): SafeNumber<any, BN> => {
 	if (typeof value === 'number' || typeof value === 'string') {
@@ -67,22 +68,22 @@ export const constructBN = (value: Constructable): SafeNumber<any, BN> => {
 	return just(value)
 }
 
-const lConstructBN = liftSafeNumber(constructBN)
+const lConstructBN = bindSafeNumber(constructBN)
 
 export const byteLengthCheck = (words: number) => (
 	num: BN
 ): SafeNumber<InvalidSizeError, BN> =>
-	num.byteLength() > words
-		? wordsError(new InvalidSizeError(words, num.byteLength()))
+	num.bitLength() > words
+		? wordsError(new InvalidSizeError(words, num.bitLength()))
 		: just(num)
 
 const lByteLengthCheck = (words: number) =>
-	liftSafeNumber(byteLengthCheck(words))
+	bindSafeNumber(byteLengthCheck(words))
 
 export const negativeCheck = (num: BN): SafeNumber<NegativeUnsignedError, BN> =>
 	num.isNeg() ? wordsError(new NegativeUnsignedError()) : just(num)
 
-const lNegativeCheck = liftSafeNumber(negativeCheck)
+const lNegativeCheck = bindSafeNumber(negativeCheck)
 
 export const constructInteger = <Words extends Integer>(words: WordsEnum) => (
 	signed: boolean
@@ -91,13 +92,13 @@ export const constructInteger = <Words extends Integer>(words: WordsEnum) => (
 		words,
 		signed,
 		value
-	}
+	} as Words
 	return just(specializeInteger<Words>(int))
 }
 
 const lConstructInteger = <Words extends Integer>(words: WordsEnum) => (
 	signed: boolean
-) => liftSafeNumber(constructInteger<Words>(words)(signed))
+) => bindSafeNumber(constructInteger<Words>(words)(signed))
 
 /**
  * @section Safe Constructors
@@ -106,14 +107,18 @@ const lConstructInteger = <Words extends Integer>(words: WordsEnum) => (
 export const safeUintConstructor = <Words extends Integer>(
 	words: WordsEnum
 ) => (value: Constructable): SafeNumber<ErrorEnum, Words> =>
-	lConstructInteger<Words>(words)(false)(
+	// prettier-ignore
+	lConstructInteger<Words>(words)(false)( 
 		lNegativeCheck(
-			lByteLengthCheck(words)(lConstructBN(lFloatingPointCheck(just(value))))
+			lByteLengthCheck(words)(
+				lConstructBN(
+					lFloatingPointCheck(
+						just(value)
+					)
+				)
+			)
 		)
 	)
-// negativeCheck['.'](byteLengthCheck(words))
-// 		['.'](constructBN)
-// 		['.'](floatingPointCheck)
 
 /**
  * @section Typing Functions
@@ -122,30 +127,29 @@ export const safeUintConstructor = <Words extends Integer>(
 export const loudlyExtractSafeNumber = (
 	safeNumber: SafeNumber<ErrorEnum, Integer>
 ) => {
-	if (safeNumber.isError) throw safeNumber
-	return safeNumber
+	if (safeNumber.isError === true) throw safeNumber.error
+	else return safeNumber.value.value
 }
 export const extractSafeNumber = (safeNumber: SafeNumber<ErrorEnum, Integer>) =>
-	safeNumber.isError ? safeNumber : safeNumber
+	safeNumber.isError === true ? safeNumber.error : safeNumber.value
 
-export const specializeInteger = <Words extends Integer>(int: {
-	words: WordsEnum
-	signed: boolean
-	value: BN
-}): Integer => {
+export const integerToBN = (x: Integer): BN => x.value
+export const safeIntegerToBN = fmapSafeNumber<Integer, BN>(integerToBN)
+
+export const specializeInteger = <Words extends Integer>(int: Words): Words => {
 	const { words, signed, value } = int
-	if (words === 8 && signed === true) return <Int8>{ words, signed, value }
-	if (words === 8 && signed === false) return <Uint8>{ words, signed, value }
-	if (words === 16 && signed === true) return <Int16>{ words, signed, value }
-	if (words === 16 && signed === false) return <Uint16>{ words, signed, value }
-	if (words === 32 && signed === true) return <Int32>{ words, signed, value }
-	if (words === 32 && signed === false) return <Uint32>{ words, signed, value }
-	if (words === 64 && signed === true) return <Int64>{ words, signed, value }
-	if (words === 64 && signed === false) return <Uint64>{ words, signed, value }
-	if (words === 128 && signed === true) return <Int128>{ words, signed, value }
+	if (words === 8 && signed === true) return { words, signed, value } as Words
+	if (words === 8 && signed === false) return { words, signed, value } as Words
+	if (words === 16 && signed === true) return { words, signed, value } as Words
+	if (words === 16 && signed === false) return { words, signed, value } as Words
+	if (words === 32 && signed === true) return { words, signed, value } as Words
+	if (words === 32 && signed === false) return { words, signed, value } as Words
+	if (words === 64 && signed === true) return { words, signed, value } as Words
+	if (words === 64 && signed === false) return { words, signed, value } as Words
+	if (words === 128 && signed === true) return { words, signed, value } as Words
 	if (words === 128 && signed === false)
-		return <Uint128>{ words, signed, value }
-	if (words === 256 && signed === true) return <Int256>{ words, signed, value }
+		return { words, signed, value } as Words
+	if (words === 256 && signed === true) return { words, signed, value } as Words
 	if (words === 256 && signed === false)
-		return <Uint256>{ words, signed, value }
+		return { words, signed, value } as Words
 }

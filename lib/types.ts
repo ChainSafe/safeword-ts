@@ -1,5 +1,5 @@
 import { BN } from 'bn.js'
-import { WordsError, Just, just, ErrorEnum } from './error'
+import { ErrorEnum } from './error'
 
 export interface MetaInteger {
 	words: WordsEnum
@@ -83,10 +83,32 @@ export type Integer = Uint | Int
 
 export type Constructable = string | number | BN
 
-// Might need to paramaterize the 'Left' and 'Right' value
+export interface WordsError<Error> {
+	isError: true
+	error: Error
+}
+export const wordsError = (error: ErrorEnum): WordsError<ErrorEnum> => ({
+	isError: true,
+	error
+})
+
+export interface Just<Value> {
+	isError: false
+	value: Value
+}
+export const just = <ValueType>(value: ValueType): Just<ValueType> => ({
+	isError: false,
+	value
+})
+
 export type SafeNumber<Error, Value> = WordsError<Error> | Just<Value>
 
-export const liftSafeNumber = <Input, Output>(
+export const bindSafeNumber = <Input, Output>(
 	fn: (x: Input) => SafeNumber<ErrorEnum, Output>
 ) => (value: SafeNumber<ErrorEnum, Input>) =>
 	value.isError === true ? value : fn(value.value)
+
+export const fmapSafeNumber = <Input, Output>(fn: (x: Input) => Output) => (
+	maybe: SafeNumber<ErrorEnum, Input>
+): SafeNumber<ErrorEnum, Output> =>
+	maybe.isError === true ? maybe : just(fn(maybe.value))

@@ -1,5 +1,3 @@
-import { Integer } from './types'
-
 export class TypeNotSupportedError extends Error {
 	constructor() {
 		super('Handling this type is not supported.')
@@ -56,24 +54,6 @@ export class UnconstructableInteger extends Error {
 		)
 	}
 }
-
-export interface WordsError<Error> {
-	isError: true
-	error: Error
-}
-export const wordsError = (error: ErrorEnum): WordsError<ErrorEnum> => ({
-	isError: true,
-	error
-})
-
-export interface Just<Value> {
-	isError: false
-	value: Value
-}
-export const just = <ValueType>(value: ValueType): Just<ValueType> => ({
-	isError: false,
-	value
-})
 
 export type ErrorEnum =
 	| TypeNotSupportedError
