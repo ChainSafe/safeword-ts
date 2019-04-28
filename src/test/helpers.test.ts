@@ -6,13 +6,22 @@ import {
 	negativeCheck,
 	constructInteger
 } from '../lib/helpers'
-import { just, wordsError } from '../lib/types'
+import { just, wordsError, Int, Uint, WordsEnum } from '../lib/types'
 import {
 	FloatingPointNotSupportedError,
 	InvalidSizeError,
-	NegativeUnsignedError
+	NegativeUnsignedError,
+	UnconstructableInteger
 } from '../lib/error'
 
+const wordsToValidNumberMap = {
+	8: '255',
+	16: '65535',
+	32: '4294967295',
+	64: '18446744073709551615',
+	128: '340282366920938463463374607431768211455',
+	256: '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+}
 /**
  * @section Validator Functions
  */
@@ -114,8 +123,42 @@ describe('negativeCheck()', () => {
 	})
 })
 describe('constructInteger()', () => {
+	const wordsEnum = [8, 16, 32, 64, 128, 256] as WordsEnum[]
+	const wordsEnumWrong = [7, 15, 31, 63, 127, 255]
+	const constructInt = constructInteger<Int>(true)
+	const constructUint = constructInteger<Uint>(false)
+
 	//  Success Cases
-	it('should', () => {})
+	it('should be able to constructInteger for all possible integer types', () => {
+		wordsEnum.forEach((words) => {
+			const bigNumber = new BN(wordsToValidNumberMap[words])
+			expect(bigNumber.bitLength() <= words).toBe(true)
+
+			const int = constructInt(words)(bigNumber)
+			const uint = constructUint(words)(bigNumber)
+			expect(int).toEqual(just({ words, signed: true, value: bigNumber }))
+			expect(uint).toEqual(just({ words, signed: false, value: bigNumber }))
+		})
+	})
 	// Failure Cases
-	it('should', () => {})
+	it('should error out when trying to construct with invalid words amount', () => {
+		wordsEnumWrong.forEach((words) => {
+			const bigNumber = new BN(wordsToValidNumberMap[words + 1])
+			expect(bigNumber.bitLength() <= words + 1).toBe(true)
+
+			// NOTE: this error requires type coercion, that the type system would otherwise catch
+			const int = constructInt(words as WordsEnum)(bigNumber)
+			const uint = constructUint(words as WordsEnum)(bigNumber)
+			expect(int).toEqual(
+				wordsError(
+					new UnconstructableInteger(words, true, bigNumber.toString(10))
+				)
+			)
+			expect(uint).toEqual(
+				wordsError(
+					new UnconstructableInteger(words, false, bigNumber.toString(10))
+				)
+			)
+		})
+	})
 })
