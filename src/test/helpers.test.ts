@@ -3,7 +3,8 @@ import {
 	floatingPointCheck,
 	constructBN,
 	bitLengthCheck,
-	negativeCheck
+	negativeCheck,
+	constructInteger
 } from '../lib/helpers'
 import { just, wordsError } from '../lib/types'
 import {
@@ -111,4 +112,10 @@ describe('negativeCheck()', () => {
 			wordsError(new NegativeUnsignedError())
 		)
 	})
+})
+describe('constructInteger()', () => {
+	//  Success Cases
+	it('should', () => {})
+	// Failure Cases
+	it('should', () => {})
 })

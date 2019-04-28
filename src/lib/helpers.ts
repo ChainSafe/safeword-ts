@@ -81,8 +81,8 @@ export const negativeCheck = (num: BN): SafeNumber<NegativeUnsignedError, BN> =>
 
 const safeNumberNegativeCheck = bindSafeNumber(negativeCheck)
 
-export const constructInteger = <Words extends Integer>(words: WordsEnum) => (
-	signed: boolean
+export const constructInteger = <Words extends Integer>(signed: boolean) => (
+	words: WordsEnum
 ) => (value: BN): SafeNumber<ErrorEnum, Words> => {
 	const int = {
 		words,
@@ -92,19 +92,21 @@ export const constructInteger = <Words extends Integer>(words: WordsEnum) => (
 	return specializeInteger<Words>(int)
 }
 
-const safeNumberConstructInteger = <Words extends Integer>(
-	words: WordsEnum
-) => (signed: boolean) => bindSafeNumber(constructInteger<Words>(words)(signed))
+const safeNumberConstructUint = <Words extends Uint>(words: WordsEnum) =>
+	bindSafeNumber(constructInteger<Words>(false)(words))
+
+const safeNumberConstructInt = <Words extends Int>(words: WordsEnum) =>
+	bindSafeNumber(constructInteger<Words>(true)(words))
 
 /**
  * @section Safe Constructors
  */
 
-export const safeUintConstructor = <Words extends Integer>(
-	words: WordsEnum
-) => (value: Constructable): SafeNumber<ErrorEnum, Words> =>
+export const safeUintConstructor = <Words extends Uint>(words: WordsEnum) => (
+	value: Constructable
+): SafeNumber<ErrorEnum, Words> =>
 	// prettier-ignore
-	safeNumberConstructInteger<Words>(words)(false)( 
+	safeNumberConstructUint<Words>(words)( 
 		safeNumberNegativeCheck(
 			safeNumberBitLengthCheck(words)(
 				safeNumberConstructBN(
