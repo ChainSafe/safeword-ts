@@ -31,16 +31,16 @@ export const uint16: (
 
 export const uint32: (
 	value: Constructable
-) => SafeNumber<Uint32> = safeUintConstructor<Uint32>(32)
+) => SafeNumber<ErrorEnum, Uint32> = safeUintConstructor<Uint32>(32)
 
 export const uint64: (
 	value: Constructable
-) => SafeNumber<Uint64> = safeUintConstructor<Uint64>(64)
+) => SafeNumber<ErrorEnum, Uint64> = safeUintConstructor<Uint64>(64)
 
 export const uint128: (
 	value: Constructable
-) => SafeNumber<Uint128> = safeUintConstructor<Uint128>(128)
+) => SafeNumber<ErrorEnum, Uint128> = safeUintConstructor<Uint128>(128)
 
 export const uint256: (
 	value: Constructable
-) => SafeNumber<Uint256> = safeUintConstructor<Uint256>(256)
+) => SafeNumber<ErrorEnum, Uint256> = safeUintConstructor<Uint256>(256)

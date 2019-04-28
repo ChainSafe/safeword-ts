@@ -95,8 +95,9 @@ export const constructInteger = <Words extends Integer>(words: WordsEnum) => (
 	return just(specializeInteger<Words>(int))
 }
 
-const lConstructInteger = (words: WordsEnum) => (signed: boolean) =>
-	liftSafeNumber(constructInteger(words)(signed))
+const lConstructInteger = <Words extends Integer>(words: WordsEnum) => (
+	signed: boolean
+) => liftSafeNumber(constructInteger<Words>(words)(signed))
 
 /**
  * @section Safe Constructors
@@ -127,37 +128,24 @@ export const loudlyExtractSafeNumber = (
 export const extractSafeNumber = (safeNumber: SafeNumber<ErrorEnum, Integer>) =>
 	safeNumber.isError ? safeNumber : safeNumber
 
-// export const specializeInteger = (integer: Integer) => {
-// 	switch (integer.words) {
-// 		case 8:
-// 			return integer.signed === true ? integer : integer
-// 		case 16:
-// 			return integer.signed === true ? integer : integer
-// 		case 32:
-// 			return integer.signed === true ? integer : integer
-// 		case 64:
-// 			return integer.signed === true ? integer : integer
-// 		case 128:
-// 			return integer.signed === true ? integer : integer
-// 		case 256:
-// 			return integer.signed === true ? integer : integer
-// 	}
-// }
-export const specializeInteger = <Words extends MetaInteger>(int: {
+export const specializeInteger = <Words extends Integer>(int: {
 	words: WordsEnum
 	signed: boolean
 	value: BN
-}): Words => {
+}): Integer => {
 	const { words, signed, value } = int
-	if (words === 8 && signed === true) return { words, signed, value }
-	if (words === 8 && signed === false) return { words, signed, value }
-	if (words === 16 && signed === true) return { words, signed, value }
-	if (words === 16 && signed === false) return { words, signed, value }
-	if (words === 32 && signed === true) return { words, signed, value }
-	if (words === 32 && signed === false) return { words, signed, value }
-	if (words === 64 && signed === true) return { words, signed, value }
-	if (words === 64 && signed === false) return { words, signed, value }
-	if (words === 128 && signed === true) return { words, signed, value }
-	if (words === 256 && signed === true) return { words, signed, value }
-	if (words === 256 && signed === false) return { words, signed, value }
+	if (words === 8 && signed === true) return <Int8>{ words, signed, value }
+	if (words === 8 && signed === false) return <Uint8>{ words, signed, value }
+	if (words === 16 && signed === true) return <Int16>{ words, signed, value }
+	if (words === 16 && signed === false) return <Uint16>{ words, signed, value }
+	if (words === 32 && signed === true) return <Int32>{ words, signed, value }
+	if (words === 32 && signed === false) return <Uint32>{ words, signed, value }
+	if (words === 64 && signed === true) return <Int64>{ words, signed, value }
+	if (words === 64 && signed === false) return <Uint64>{ words, signed, value }
+	if (words === 128 && signed === true) return <Int128>{ words, signed, value }
+	if (words === 128 && signed === false)
+		return <Uint128>{ words, signed, value }
+	if (words === 256 && signed === true) return <Int256>{ words, signed, value }
+	if (words === 256 && signed === false)
+		return <Uint256>{ words, signed, value }
 }
