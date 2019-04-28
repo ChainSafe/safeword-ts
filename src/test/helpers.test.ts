@@ -6,7 +6,8 @@ import {
 	negativeCheck,
 	constructInteger,
 	safeUintConstructor,
-	loudlyExtractSafeNumber
+	loudlyExtractSafeNumber,
+	extractSafeNumber
 } from '../lib/helpers'
 import {
 	just,
@@ -262,5 +263,29 @@ describe('loudlyExtractSafeNumber()', () => {
 			return
 		}
 		throw new Error('test should have thrown, but it did not')
+	})
+})
+describe('extractSafeNumber()', () => {
+	const successMock = jest.fn()
+	const failureMock = jest.fn()
+	const successCase = successMock
+	const failureCase = failureMock
+	const value = new BN(200)
+	const uint8 = { words: 8, signed: false, value } as Uint8
+	const justUint8 = just<Uint8>(uint8)
+	const floatingError = new FloatingPointNotSupportedError()
+	const error = wordsError(floatingError)
+
+	it('should call succes mock with integer', () => {
+		extractSafeNumber<void, void>(failureCase)(successCase)(justUint8)
+		expect(successMock).toHaveBeenCalledTimes(1)
+		expect(failureMock).toHaveBeenCalledTimes(0)
+		expect(successMock).toHaveBeenCalledWith(uint8)
+	})
+	it('should throw when SafeNumber resolves to an error', () => {
+		extractSafeNumber<void, void>(failureCase)(successCase)(error)
+		expect(successMock).toHaveBeenCalledTimes(0)
+		expect(failureMock).toHaveBeenCalledTimes(1)
+		expect(failureMock).toHaveBeenCalledWith(floatingError)
 	})
 })
