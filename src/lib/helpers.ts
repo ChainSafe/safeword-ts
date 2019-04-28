@@ -55,8 +55,6 @@ export const floatingPointCheck = (
 	return just(num)
 }
 
-const safeNumberFloatingPointCheck = bindSafeNumber(floatingPointCheck)
-
 export const constructBN = (value: Constructable): BN => {
 	if (typeof value === 'number' || typeof value === 'string') {
 		return new BN(value, 10)
@@ -110,8 +108,8 @@ export const safeUintConstructor = <Words extends Uint>(words: WordsEnum) => (
 		safeNumberNegativeCheck(
 			safeNumberBitLengthCheck(words)(
 				safeNumberConstructBN(
-					safeNumberFloatingPointCheck(
-						just(value)
+					floatingPointCheck(
+						value
 					)
 				)
 			)
@@ -119,17 +117,20 @@ export const safeUintConstructor = <Words extends Uint>(words: WordsEnum) => (
 	)
 
 /**
- * @section Typing Functions
+ * @section Typing Functions and Extractors
  */
 
-export const loudlyExtractSafeNumber = (
-	safeNumber: SafeNumber<ErrorEnum, Integer>
-) => {
+export const loudlyExtractSafeNumber = <SuccessResult>(
+	f: (x: Integer) => SuccessResult
+) => (safeNumber: SafeNumber<ErrorEnum, Integer>) => {
 	if (safeNumber.isError === true) throw safeNumber.error
-	else return safeNumber.value.value
+	else return f(safeNumber.value)
 }
-export const extractSafeNumber = (safeNumber: SafeNumber<ErrorEnum, Integer>) =>
-	safeNumber.isError === true ? safeNumber.error : safeNumber.value
+export const extractSafeNumber = <ErrorResult, SuccessResult>(
+	f: (x: ErrorEnum) => ErrorResult
+) => (g: (x: Integer) => SuccessResult) => (
+	safeNumber: SafeNumber<ErrorEnum, Integer>
+) => (safeNumber.isError === true ? f(safeNumber.error) : g(safeNumber.value))
 
 export const integerToBN = (x: Integer): BN => x.value
 export const safeIntegerToBN = fmapSafeNumber<Integer, BN>(integerToBN)

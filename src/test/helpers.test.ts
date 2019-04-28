@@ -5,9 +5,22 @@ import {
 	bitLengthCheck,
 	negativeCheck,
 	constructInteger,
-	safeUintConstructor
+	safeUintConstructor,
+	loudlyExtractSafeNumber
 } from '../lib/helpers'
-import { just, wordsError, Int, Uint, WordsEnum } from '../lib/types'
+import {
+	just,
+	wordsError,
+	Int,
+	Uint,
+	WordsEnum,
+	Uint8,
+	Uint16,
+	Uint32,
+	Uint64,
+	Uint128,
+	Uint256
+} from '../lib/types'
 import {
 	FloatingPointNotSupportedError,
 	InvalidSizeError,
@@ -21,7 +34,8 @@ const wordsToValidNumberMap = {
 	32: '4294967295',
 	64: '18446744073709551615',
 	128: '340282366920938463463374607431768211455',
-	256: '115792089237316195423570985008687907853269984665640564039457584007913129639935'
+	256: '115792089237316195423570985008687907853269984665640564039457584007913129639935',
+	257: '115792089237316195423570985008687907853269984665640564039457584007913129639936'
 }
 /**
  * @section Validator Functions
@@ -168,10 +182,85 @@ describe('constructInteger()', () => {
  * @section Safe Constructors
  */
 describe('safeUintConstructor()', () => {
-	describe('Uint8', () => {})
-	describe('Uint16', () => {})
-	describe('Uint32', () => {})
-	describe('Uint64', () => {})
-	describe('Uint128', () => {})
-	describe('Uint256', () => {})
+	const wordsEnum = [8, 16, 32, 64, 128, 256] as WordsEnum[]
+	// Success Cases
+	it('should safely constructs Uints when constructed with strings', () => {
+		wordsEnum.forEach((words) => {
+			const numberAsString = wordsToValidNumberMap[words]
+			const bn = new BN(numberAsString)
+			expect(safeUintConstructor<Uint>(words)(numberAsString)).toEqual(
+				just({ words, signed: false, value: bn })
+			)
+		})
+	})
+	it('should safely constructs Uints when constructed with number (below 2^53)', () => {
+		const belowJSPercisionLimit = [8, 16, 32] as WordsEnum[]
+		belowJSPercisionLimit.forEach((words) => {
+			const number = parseInt(wordsToValidNumberMap[words])
+			const bn = new BN(number)
+			expect(safeUintConstructor<Uint>(words)(number)).toEqual(
+				just({ words, signed: false, value: bn })
+			)
+		})
+	})
+	it('should safely constructs Uints when constructed with BN', () => {
+		wordsEnum.forEach((words) => {
+			const numberAsString = wordsToValidNumberMap[words]
+			const bn = new BN(numberAsString)
+			expect(safeUintConstructor<Uint>(words)(bn)).toEqual(
+				just({ words, signed: false, value: bn })
+			)
+		})
+	})
+	// Failure Cases
+	it('should propagate FloatingPointNotSupportedError when given floating points', () => {
+		wordsEnum.forEach((words) => {
+			const numberAsString = `${wordsToValidNumberMap[words]}.88`
+			expect(safeUintConstructor<Uint>(words)(numberAsString)).toEqual(
+				wordsError(new FloatingPointNotSupportedError())
+			)
+		})
+	})
+	it('should propagate InvalidSizeError when given a number that is greater than the number of words', () => {
+		wordsEnum.forEach((words) => {
+			const bn =
+				words === 256
+					? new BN(wordsToValidNumberMap[words + 1])
+					: new BN(wordsToValidNumberMap[words * 2])
+			expect(safeUintConstructor<Uint>(words)(bn)).toEqual(
+				wordsError(new InvalidSizeError(words, bn.bitLength()))
+			)
+		})
+	})
+	it('should propagate InvalidSizeError when given a negative number', () => {
+		wordsEnum.forEach((words) => {
+			expect(safeUintConstructor<Uint>(words)(-1)).toEqual(
+				wordsError(new NegativeUnsignedError())
+			)
+		})
+	})
+})
+
+/**
+ * @section Typing Functions and Extractors
+ */
+describe('loudlyExtractSafeNumber()', () => {
+	const id = <T>() => (x: T): T => x
+	it('should return the value wrapped in Just when given id() and just<Integer>', () => {
+		const value = new BN(200)
+		const uint8 = { words: 8, signed: false, value } as Uint8
+		const integer = just<Uint8>(uint8)
+		expect(loudlyExtractSafeNumber<Uint8>(id<Uint8>())(integer)).toEqual(uint8)
+	})
+	it('should throw when SafeNumber resolves to an error', () => {
+		const floatingError = new FloatingPointNotSupportedError()
+		const error = wordsError(floatingError)
+		try {
+			loudlyExtractSafeNumber<Uint8>(id<Uint8>())(error)
+		} catch (e) {
+			expect(e).toEqual(floatingError)
+			return
+		}
+		throw new Error('test should have thrown, but it did not')
+	})
 })
