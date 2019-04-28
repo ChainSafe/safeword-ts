@@ -4,7 +4,8 @@ import {
 	constructBN,
 	bitLengthCheck,
 	negativeCheck,
-	constructInteger
+	constructInteger,
+	safeUintConstructor
 } from '../lib/helpers'
 import { just, wordsError, Int, Uint, WordsEnum } from '../lib/types'
 import {
@@ -161,4 +162,16 @@ describe('constructInteger()', () => {
 			)
 		})
 	})
+})
+
+/**
+ * @section Safe Constructors
+ */
+describe('safeUintConstructor()', () => {
+	describe('Uint8', () => {})
+	describe('Uint16', () => {})
+	describe('Uint32', () => {})
+	describe('Uint64', () => {})
+	describe('Uint128', () => {})
+	describe('Uint256', () => {})
 })
