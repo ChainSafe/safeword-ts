@@ -7,8 +7,7 @@
 		"test": "jest",
 		"test:cov": "jest --coverage",
 		"test:dev": "jest --watchAll",
-		"coverage": "codecov -f coverage/*.json",
-		"coverage:open": "open coverage/lcov-report/index.html",
+		"coverage": "open coverage/lcov-report/index.html",
 		"build": "tsc --build tsconfig.json",
 		"lint": "node_modules/.bin/tslint -c tslint.json '*/*.ts'",
 		"compile": "tsc -p ."
