@@ -278,7 +278,6 @@ describe('extractSafeNumber()', () => {
 		expect(failureMock).toHaveBeenCalledWith(floatingError)
 	})
 })
-
 describe('safeIntegerToBN()', () => {
 	// Success Case
 	it('should successfully convert Integer to BN', () => {
