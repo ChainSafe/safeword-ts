@@ -4,6 +4,7 @@
 	"description": "A library designed to prevent overflows and underflows with types and runtime errors",
 	"main": "index.ts",
 	"scripts": {
+		"test": "jest",
 		"test:cov": "jest --coverage",
 		"test:dev": "jest --watchAll",
 		"coverage": "open coverage/lcov-report/index.html",
