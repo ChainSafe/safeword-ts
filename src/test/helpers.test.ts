@@ -7,21 +7,10 @@ import {
 	constructInteger,
 	safeUintConstructor,
 	loudlyExtractSafeNumber,
-	extractSafeNumber
+	extractSafeNumber,
+	safeIntegerToBN
 } from '../lib/helpers'
-import {
-	just,
-	wordsError,
-	Int,
-	Uint,
-	WordsEnum,
-	Uint8,
-	Uint16,
-	Uint32,
-	Uint64,
-	Uint128,
-	Uint256
-} from '../lib/types'
+import { just, wordsError, Int, Uint, WordsEnum, Uint8 } from '../lib/types'
 import {
 	FloatingPointNotSupportedError,
 	InvalidSizeError,
@@ -287,5 +276,19 @@ describe('extractSafeNumber()', () => {
 		expect(successMock).toHaveBeenCalledTimes(0)
 		expect(failureMock).toHaveBeenCalledTimes(1)
 		expect(failureMock).toHaveBeenCalledWith(floatingError)
+	})
+})
+
+describe('safeIntegerToBN()', () => {
+	// Success Case
+	it('should successfully convert Integer to BN', () => {
+		const value = new BN(200)
+		const integer = just<Uint8>({ words: 8, signed: false, value })
+		expect(safeIntegerToBN(integer)).toEqual(just(value))
+	})
+	// Failure Case
+	it('should return error when given an error', () => {
+		const error = wordsError(new FloatingPointNotSupportedError())
+		expect(safeIntegerToBN(error)).toEqual(error)
 	})
 })
