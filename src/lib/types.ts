@@ -1,4 +1,4 @@
-import { BN } from 'bn.js'
+import BN from 'bn.js'
 import { ErrorEnum } from './error'
 
 export interface MetaInteger {
